@@ -1,0 +1,3647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>阿梦云盘</title>
+    <!-- 设置图标 -->
+    <link rel="icon" href="icon.jpeg" type="image/png">
+    <script src="/mammoth.browser.min.js"></script>
+    <style>
+        /* 基础样式与重置 */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #eef2f7;
+            --bg-accent: #f0f5ff;
+            --primary-gradient: linear-gradient(135deg, #5e60ce 0%, #64dfdf 100%);
+            --secondary-gradient: linear-gradient(135deg, #ff9a8b 0%, #ff6a88 55%, #ff99ac 100%);
+            --primary: #5e60ce;
+            --secondary: #64dfdf;
+            --accent: #ff6a88;
+            --text-primary: #2d3748;
+            --text-secondary: #4a5568;
+            --text-tertiary: #718096;
+            --border: #e2e8f0;
+            --success: #48bb78;
+            --warning: #f6ad55;
+            --danger: #f56565;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.12);
+            --transition-fast: 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --transition-normal: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --transition-slow: 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --font-size-base: 16px;
+            --spacing-unit: 8px;
+
+            /* AI聊天相关颜色 */
+            --ai-douban: #4e7a9b;
+            --ai-tongyi: #7e57c2;
+            --ai-deepseek: #2c7a7b;
+            --ai-gradient-douban: linear-gradient(135deg, #4e7a9b 0%, #6ba5d3 100%);
+            --ai-gradient-tongyi: linear-gradient(135deg, #7e57c2 0%, #b085f5 100%);
+            --ai-gradient-deepseek: linear-gradient(135deg, #2c7a7b 0%, #38b2ac 100%);
+            --ai-user-bubble: var(--bg-tertiary);
+            --ai-bot-bubble: var(--bg-accent);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a202c;
+            --bg-secondary: #2d3748;
+            --bg-tertiary: #283141;
+            --bg-accent: #2c3e50;
+            --primary-gradient: linear-gradient(135deg, #7f5af0 0%, #4cc9f0 100%);
+            --secondary-gradient: linear-gradient(135deg, #ff8e3c 0%, #ff4d6d 100%);
+            --primary: #7f5af0;
+            --secondary: #4cc9f0;
+            --accent: #ff4d6d;
+            --text-primary: #f7fafc;
+            --text-secondary: #e2e8f0;
+            --text-tertiary: #a0aec0;
+            --border: #4a5568;
+            --success: #68d391;
+            --warning: #f6ad55;
+            --danger: #fc8181;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+            --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.3);
+
+            /* AI聊天相关颜色-暗色模式 */
+            --ai-douban: #5d8aab;
+            --ai-tongyi: #9575cd;
+            --ai-deepseek: #38b2ac;
+            --ai-gradient-douban: linear-gradient(135deg, #5d8aab 0%, #7fb1dd 100%);
+            --ai-gradient-tongyi: linear-gradient(135deg, #9575cd 0%, #c4a1f5 100%);
+            --ai-gradient-deepseek: linear-gradient(135deg, #38b2ac 0%, #4fd1c5 100%);
+            --ai-user-bubble: #3a4556;
+            --ai-bot-bubble: #2d3748;
+        }
+
+        body {
+            min-height: 100vh;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            font-size: var(--font-size-base);
+            touch-action: manipulation;
+            transition: background-color var(--transition-normal), color var(--transition-normal);
+        }
+
+        .auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-gradient);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity var(--transition-normal);
+            overflow: auto;
+        }
+
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='rgba(255,255,255,.075)' fill-rule='evenodd'/%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        .auth-container.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .auth-card {
+            width: 90%;
+            max-width: 400px;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            transform: translateY(0);
+            transition: transform var(--transition-normal), box-shadow var(--transition-normal), background-color var(--transition-normal);
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .auth-header {
+            padding: calc(var(--spacing-unit) * 3);
+            background: var(--primary-gradient);
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.3;
+        }
+
+        .auth-header h1 {
+            font-size: 1.75rem;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 700;
+            position: relative;
+        }
+
+        .auth-header p {
+            opacity: 0.9;
+            font-size: 0.875rem;
+            position: relative;
+        }
+
+        .auth-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            background-color: var(--bg-secondary);
+            transition: background-color var(--transition-normal);
+        }
+
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: calc(var(--spacing-unit) * 1.5);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            color: var(--text-tertiary);
+            transition: color var(--transition-fast), background-color var(--transition-fast);
+            position: relative;
+        }
+
+        .auth-tab.active {
+            color: var(--primary);
+        }
+
+        .auth-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary-gradient);
+        }
+
+        .auth-body {
+            padding: calc(var(--spacing-unit) * 3);
+            background-color: var(--bg-secondary);
+            transition: background-color var(--transition-normal);
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .form-group {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: calc(var(--spacing-unit) * 0.75);
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            transition: color var(--transition-normal);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: calc(var(--spacing-unit) * 1.25);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.9375rem;
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-normal), color var(--transition-normal);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(100, 223, 223, 0.2);
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: calc(var(--spacing-unit) * 1.5);
+            border: none;
+            border-radius: 10px;
+            background: var(--primary-gradient);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+            position: relative;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(94, 96, 206, 0.3);
+        }
+
+        .auth-btn:active {
+            transform: translateY(0);
+        }
+
+        .auth-btn .loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        .auth-btn.loading .loader {
+            display: block;
+        }
+
+        .auth-btn.loading {
+            color: transparent;
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity var(--transition-normal), transform var(--transition-normal);
+            pointer-events: none;
+            background-color: var(--bg-primary);
+        }
+
+        .app-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            box-shadow: var(--shadow-sm);
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            transition: background-color var(--transition-normal), box-shadow var(--transition-normal);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: calc(var(--spacing-unit) * 1);
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: color var(--transition-normal);
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--primary-gradient);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.125rem;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: calc(var(--spacing-unit) * 1.5);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--secondary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            cursor: pointer;
+            transition: transform var(--transition-fast);
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+        }
+
+        .theme-toggle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color var(--transition-normal), color var(--transition-normal), transform var(--transition-fast);
+            border: none;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+            color: var(--primary);
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: color var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: calc(var(--spacing-unit) * 0.5);
+        }
+
+        .logout-btn:hover {
+            color: var(--danger);
+        }
+
+        .logout-btn::before {
+            content: '🚪';
+            font-size: 1rem;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: calc(var(--spacing-unit) * 3);
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .upload-section {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: calc(var(--spacing-unit) * 3);
+            box-shadow: var(--shadow-md);
+            transition: transform var(--transition-normal), box-shadow var(--transition-normal), background-color var(--transition-normal);
+        }
+
+        .upload-section:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: calc(var(--spacing-unit) * 1);
+            transition: color var(--transition-normal);
+        }
+
+        .section-title::before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 20px;
+            background: var(--primary-gradient);
+            border-radius: 2px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 15px;
+            padding: calc(var(--spacing-unit) * 4);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            position: relative;
+            background-color: var(--bg-tertiary);
+        }
+
+        .upload-area:hover {
+            border-color: var(--secondary);
+            background: var(--bg-accent);
+        }
+
+        .upload-area.drag-over {
+            border-color: var(--secondary);
+            background: var(--bg-accent);
+            transform: scale(1.01);
+        }
+
+        .upload-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto calc(var(--spacing-unit) * 2);
+            background: linear-gradient(135deg, rgba(94, 96, 206, 0.1) 0%, rgba(100, 223, 223, 0.1) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            color: var(--secondary);
+            transition: background var(--transition-normal), color var(--transition-normal);
+        }
+
+        .upload-text {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: calc(var(--spacing-unit) * 1);
+            color: var(--text-primary);
+            transition: color var(--transition-normal);
+        }
+
+        .upload-subtext {
+            color: var(--text-tertiary);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            font-size: 0.875rem;
+            transition: color var(--transition-normal);
+        }
+
+        .upload-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 2.5);
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            cursor: pointer;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+            touch-action: manipulation;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(94, 96, 206, 0.2);
+        }
+
+        .upload-btn:active {
+            transform: scale(0.95);
+        }
+
+        .upload-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+            pointer-events: auto;
+        }
+
+        .files-section {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: calc(var(--spacing-unit) * 3);
+            box-shadow: var(--shadow-md);
+            transition: transform var(--transition-normal), box-shadow var(--transition-normal), background-color var(--transition-normal);
+        }
+
+        .files-section:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .files-list {
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 1.5);
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: calc(var(--spacing-unit) * 1.5);
+            border-radius: 15px;
+            background: var(--bg-tertiary);
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-normal);
+        }
+
+        .file-item:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-sm);
+            background: var(--bg-accent);
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.125rem;
+            margin-right: calc(var(--spacing-unit) * 1.5);
+        }
+
+        .file-icon.image {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .file-icon.document {
+            background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+        }
+
+        .file-icon.archive {
+            background: linear-gradient(135deg, #f46b45 0%, #eea849 100%);
+        }
+
+        .file-icon.video {
+            background: linear-gradient(135deg, #c31432 0%, #240b36 100%);
+        }
+
+        .file-icon.audio {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .file-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .file-name {
+            font-weight: 600;
+            margin-bottom: calc(var(--spacing-unit) * 0.5);
+            color: var(--text-primary);
+            font-size: 0.9375rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: color var(--transition-normal);
+        }
+
+        .file-meta {
+            display: flex;
+            gap: calc(var(--spacing-unit) * 1.5);
+            font-size: 0.8125rem;
+            color: var(--text-tertiary);
+            transition: color var(--transition-normal);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: calc(var(--spacing-unit) * 1);
+        }
+
+        .file-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            transition: background-color var(--transition-fast), transform var(--transition-fast);
+            font-size: 1rem;
+        }
+
+        .download-btn {
+            background: rgba(94, 96, 206, 0.1);
+            color: var(--primary);
+            transition: background-color var(--transition-normal), color var(--transition-normal), transform var(--transition-fast);
+            touch-action: manipulation;
+        }
+
+        .download-btn:hover {
+            background: rgba(94, 96, 206, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .download-btn:active {
+            transform: scale(0.95);
+            background: rgba(94, 96, 206, 0.3);
+        }
+
+        .delete-btn {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+            transition: background-color var(--transition-normal), color var(--transition-normal);
+        }
+
+        .delete-btn:hover {
+            background: rgba(220, 53, 69, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .delete-btn:active {
+            transform: scale(0.95);
+        }
+
+        .empty-files {
+            text-align: center;
+            padding: calc(var(--spacing-unit) * 4) calc(var(--spacing-unit) * 2);
+            color: var(--text-tertiary);
+            transition: color var(--transition-normal);
+        }
+
+        .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            opacity: 0.5;
+        }
+
+        .empty-text {
+            font-size: 1rem;
+            margin-bottom: calc(var(--spacing-unit) * 1);
+        }
+
+        .empty-subtext {
+            font-size: 0.875rem;
+            opacity: 0.7;
+        }
+
+        .upload-progress {
+            position: fixed;
+            bottom: calc(var(--spacing-unit) * 3);
+            right: calc(var(--spacing-unit) * 3);
+            width: 350px;
+            background: var(--bg-secondary);
+            border-radius: 15px;
+            box-shadow: var(--shadow-lg);
+            padding: calc(var(--spacing-unit) * 2);
+            transform: translateY(150%);
+            transition: transform var(--transition-normal), background-color var(--transition-normal);
+            z-index: 100;
+        }
+
+        .upload-progress.visible {
+            transform: translateY(0);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: calc(var(--spacing-unit) * 1.5);
+        }
+
+        .progress-title {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-primary);
+            transition: color var(--transition-normal);
+        }
+
+        .progress-close {
+            background: none;
+            border: none;
+            font-size: 1.125rem;
+            cursor: pointer;
+            color: var(--text-tertiary);
+            transition: color var(--transition-fast);
+        }
+
+        .progress-close:hover {
+            color: var(--text-primary);
+        }
+
+        .progress-item {
+            display: flex;
+            align-items: center;
+            gap: calc(var(--spacing-unit) * 1.5);
+            margin-bottom: calc(var(--spacing-unit) * 1.5);
+        }
+
+        .progress-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .progress-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .progress-name {
+            font-weight: 500;
+            margin-bottom: calc(var(--spacing-unit) * 0.5);
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: color var(--transition-normal);
+        }
+
+        .progress-bar {
+            height: 5px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: calc(var(--spacing-unit) * 0.5);
+            transition: background-color var(--transition-normal);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-gradient);
+            border-radius: 3px;
+            width: 0;
+            transition: width 0.3s linear;
+        }
+
+        .progress-status {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            transition: color var(--transition-normal);
+        }
+
+        /* AI聊天相关样式 */
+        .ai-chat-section {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: calc(var(--spacing-unit) * 3);
+            box-shadow: var(--shadow-md);
+            transition: transform var(--transition-normal), box-shadow var(--transition-normal), background-color var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-chat-section:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .ai-chat-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(135deg, rgba(94, 96, 206, 0.05) 0%, rgba(100, 223, 223, 0.05) 100%);
+            border-radius: 0 0 0 100%;
+            z-index: 0;
+            transition: background var(--transition-normal);
+        }
+
+        .ai-chat-intro {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: calc(var(--spacing-unit) * 2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .ai-chat-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            position: relative;
+            animation: pulse 3s infinite ease-in-out;
+        }
+
+        .ai-chat-icon::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            opacity: 0.3;
+            z-index: -1;
+            animation: ripple 3s infinite ease-out;
+        }
+
+        .ai-chat-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: calc(var(--spacing-unit) * 1);
+            color: var(--text-primary);
+            transition: color var(--transition-normal);
+        }
+
+        .ai-chat-description {
+            color: var(--text-secondary);
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            max-width: 500px;
+            transition: color var(--transition-normal);
+        }
+
+        .ai-chat-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 3);
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: calc(var(--spacing-unit) * 1);
+        }
+
+        .ai-chat-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(94, 96, 206, 0.3);
+        }
+
+        .ai-chat-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* AI聊天模态框 */
+        .ai-chat-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-normal), visibility var(--transition-normal);
+            backdrop-filter: blur(5px);
+        }
+
+        .ai-chat-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .ai-chat-container {
+            width: 90%;
+            max-width: 1000px;
+            height: 80vh;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateY(50px);
+            opacity: 0;
+            transition: transform var(--transition-normal), opacity var(--transition-normal), background-color var(--transition-normal);
+        }
+
+        .ai-chat-modal.visible .ai-chat-container {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .ai-chat-header {
+            padding: calc(var(--spacing-unit) * 2);
+            background: var(--bg-tertiary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            transition: background-color var(--transition-normal);
+        }
+
+        .ai-chat-header-title {
+            font-weight: 600;
+            font-size: 1.125rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: calc(var(--spacing-unit) * 1);
+            transition: color var(--transition-normal);
+        }
+
+        .ai-chat-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            color: var(--text-tertiary);
+            transition: background-color var(--transition-normal), color var(--transition-normal), transform var(--transition-fast);
+        }
+
+        .ai-chat-close:hover {
+            transform: rotate(90deg);
+            color: var(--text-primary);
+        }
+
+        .ai-model-selector {
+            display: flex;
+            padding: calc(var(--spacing-unit) * 1.5);
+            background: var(--bg-tertiary);
+            gap: calc(var(--spacing-unit) * 1);
+            transition: background-color var(--transition-normal);
+        }
+
+        .ai-model-option {
+            flex: 1;
+            padding: calc(var(--spacing-unit) * 1.5);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            border: 2px solid transparent;
+            cursor: pointer;
+            text-align: center;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-normal);
+        }
+
+        .ai-model-option:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .ai-model-option.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(94, 96, 206, 0.1);
+        }
+
+        .ai-model-option.douban.active {
+            border-color: var(--ai-douban);
+            box-shadow: 0 0 0 3px rgba(78, 122, 155, 0.1);
+        }
+
+        .ai-model-option.tongyi.active {
+            border-color: var(--ai-tongyi);
+            box-shadow: 0 0 0 3px rgba(126, 87, 194, 0.1);
+        }
+
+        .ai-model-option.deepseek.active {
+            border-color: var(--ai-deepseek);
+            box-shadow: 0 0 0 3px rgba(44, 122, 123, 0.1);
+        }
+
+        .ai-model-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            margin: 0 auto calc(var(--spacing-unit) * 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: white;
+        }
+
+        .ai-model-option.douban .ai-model-icon {
+            background: var(--ai-gradient-douban);
+        }
+
+        .ai-model-option.tongyi .ai-model-icon {
+            background: var(--ai-gradient-tongyi);
+        }
+
+        .ai-model-option.deepseek .ai-model-icon {
+            background: var(--ai-gradient-deepseek);
+        }
+
+        .ai-model-name {
+            font-weight: 600;
+            font-size: 0.9375rem;
+            margin-bottom: calc(var(--spacing-unit) * 0.5);
+            color: var(--text-primary);
+            transition: color var(--transition-normal);
+        }
+
+        .ai-model-description {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            transition: color var(--transition-normal);
+        }
+
+        .ai-chat-messages {
+            flex: 1;
+            padding: calc(var(--spacing-unit) * 2);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 2);
+            background-color: var(--bg-primary);
+            transition: background-color var(--transition-normal);
+        }
+
+        .ai-message {
+            display: flex;
+            gap: calc(var(--spacing-unit) * 1.5);
+            max-width: 85%;
+            animation: fadeInUp 0.3s ease forwards;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .ai-message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .ai-message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--secondary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        .ai-message.bot .ai-message-avatar {
+            background: var(--primary-gradient);
+        }
+
+        .ai-message.bot.douban .ai-message-avatar {
+            background: var(--ai-gradient-douban);
+        }
+
+        .ai-message.bot.tongyi .ai-message-avatar {
+            background: var(--ai-gradient-tongyi);
+        }
+
+        .ai-message.bot.deepseek .ai-message-avatar {
+            background: var(--ai-gradient-deepseek);
+        }
+
+        .ai-message-content {
+            padding: calc(var(--spacing-unit) * 1.5);
+            border-radius: 15px;
+            background: var(--ai-user-bubble);
+            color: var(--text-primary);
+            font-size: 0.9375rem;
+            position: relative;
+            transition: background-color var(--transition-normal), color var(--transition-normal);
+        }
+
+        .ai-message.user .ai-message-content {
+            border-top-right-radius: 4px;
+        }
+
+        .ai-message.bot .ai-message-content {
+            background: var(--ai-bot-bubble);
+            border-top-left-radius: 4px;
+        }
+
+        .ai-message-time {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            margin-top: calc(var(--spacing-unit) * 0.5);
+            align-self: flex-end;
+            transition: color var(--transition-normal);
+        }
+
+        .ai-message.thinking .ai-message-content {
+            display: flex;
+            align-items: center;
+            gap: calc(var(--spacing-unit) * 0.5);
+        }
+
+        .ai-thinking-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-tertiary);
+            animation: thinking 1.4s infinite ease-in-out;
+        }
+
+        .ai-thinking-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .ai-thinking-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .ai-thinking-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        .ai-chat-input-container {
+            padding: calc(var(--spacing-unit) * 2);
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            transition: background-color var(--transition-normal);
+        }
+
+        .ai-chat-input-wrapper {
+            display: flex;
+            gap: calc(var(--spacing-unit) * 1);
+            position: relative;
+        }
+
+        .ai-chat-input {
+            flex: 1;
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2);
+            border: 2px solid var(--border);
+            border-radius: 15px;
+            font-size: 0.9375rem;
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            resize: none;
+            min-height: 56px;
+            max-height: 150px;
+            transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-normal), color var(--transition-normal);
+        }
+
+        .ai-chat-input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(100, 223, 223, 0.2);
+        }
+
+        .ai-chat-send {
+            width: 56px;
+            height: 56px;
+            border-radius: 15px;
+            background: var(--primary-gradient);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+            flex-shrink: 0;
+        }
+
+        .ai-chat-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(94, 96, 206, 0.3);
+        }
+
+        .ai-chat-send:active {
+            transform: scale(0.95);
+        }
+
+        .ai-chat-send.douban {
+            background: var(--ai-gradient-douban);
+        }
+
+        .ai-chat-send.tongyi {
+            background: var(--ai-gradient-tongyi);
+        }
+
+        .ai-chat-send.deepseek {
+            background: var(--ai-gradient-deepseek);
+        }
+
+        .ai-chat-send .loader {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        .ai-chat-send.loading {
+            pointer-events: none;
+        }
+
+        .ai-chat-send.loading .loader {
+            display: block;
+        }
+
+        .ai-chat-send.loading .send-icon {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(1);
+                opacity: 0.3;
+            }
+
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes thinking {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0.6);
+                opacity: 0.6;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --font-size-base: 14px;
+                --spacing-unit: 7px;
+            }
+
+            .auth-card {
+                width: 95%;
+                max-width: 360px;
+            }
+
+            .auth-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .auth-header p {
+                font-size: 0.8125rem;
+            }
+
+            .main-content {
+                padding: calc(var(--spacing-unit) * 2);
+            }
+
+            .upload-section,
+            .files-section,
+            .ai-chat-section {
+                padding: calc(var(--spacing-unit) * 2);
+            }
+
+            .upload-area {
+                padding: calc(var(--spacing-unit) * 3);
+            }
+
+            .upload-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+
+            .upload-text {
+                font-size: 1rem;
+            }
+
+            .upload-subtext {
+                font-size: 0.8125rem;
+            }
+
+            .upload-progress {
+                width: 90%;
+                max-width: 320px;
+                right: calc(var(--spacing-unit) * 2);
+                left: calc(var(--spacing-unit) * 2);
+                padding: calc(var(--spacing-unit) * 1.5);
+            }
+
+            .file-item {
+                padding: calc(var(--spacing-unit) * 1);
+            }
+
+            .file-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+
+            .file-name {
+                font-size: 0.875rem;
+            }
+
+            .file-meta {
+                flex-direction: column;
+                gap: calc(var(--spacing-unit) * 0.5);
+            }
+
+            .ai-chat-container {
+                width: 95%;
+                height: 90vh;
+            }
+
+            .ai-chat-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem;
+            }
+
+            .ai-chat-title {
+                font-size: 1.25rem;
+            }
+
+            .ai-chat-description {
+                font-size: 0.875rem;
+            }
+
+            .ai-model-selector {
+                flex-direction: column;
+                padding: calc(var(--spacing-unit) * 1);
+            }
+
+            .ai-model-option {
+                display: flex;
+                align-items: center;
+                text-align: left;
+                padding: calc(var(--spacing-unit) * 1);
+            }
+
+            .ai-model-icon {
+                margin: 0 calc(var(--spacing-unit) * 1) 0 0;
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+            }
+
+            .ai-model-info {
+                flex: 1;
+            }
+
+            .ai-message {
+                max-width: 90%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            :root {
+                --font-size-base: 13px;
+                --spacing-unit: 6px;
+            }
+
+            body {
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .header {
+                padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 1.5);
+            }
+
+            .logo-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+            }
+
+            .logo-text {
+                font-size: 1.125rem;
+            }
+
+            .user-menu {
+                gap: calc(var(--spacing-unit) * 1);
+            }
+
+            .user-avatar,
+            .theme-toggle {
+                width: 32px;
+                height: 32px;
+                font-size: 0.875rem;
+            }
+
+            .logout-btn {
+                font-size: 0;
+                width: 32px;
+                height: 32px;
+                justify-content: center;
+            }
+
+            .logout-btn::before {
+                font-size: 1.125rem;
+            }
+
+            .auth-header h1 {
+                font-size: 1.375rem;
+            }
+
+            .auth-tab {
+                font-size: 0.875rem;
+                padding: calc(var(--spacing-unit) * 1);
+            }
+
+            .form-group input {
+                font-size: 0.875rem;
+                padding: calc(var(--spacing-unit) * 1);
+            }
+
+            .auth-btn {
+                font-size: 0.9375rem;
+                padding: calc(var(--spacing-unit) * 1.25);
+            }
+
+            .section-title {
+                font-size: 1.125rem;
+            }
+
+            .upload-area {
+                padding: calc(var(--spacing-unit) * 2);
+            }
+
+            .upload-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.25rem;
+            }
+
+            .upload-text {
+                font-size: 0.9375rem;
+            }
+
+            .upload-subtext {
+                font-size: 0.75rem;
+            }
+
+            .upload-btn {
+                font-size: 0.875rem;
+                padding: calc(var(--spacing-unit) * 0.75) calc(var(--spacing-unit) * 2);
+            }
+
+            .file-item {
+                flex-wrap: wrap;
+                gap: calc(var(--spacing-unit) * 1);
+            }
+
+            .file-info {
+                flex: 1 1 100%;
+                order: 2;
+            }
+
+            .file-actions {
+                flex: 0 0 auto;
+                order: 1;
+                margin-left: auto;
+            }
+
+            .file-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 0.875rem;
+            }
+
+            .file-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 0.875rem;
+            }
+
+            .upload-progress {
+                width: 95%;
+                bottom: calc(var(--spacing-unit) * 2);
+                right: calc(var(--spacing-unit) * 1);
+                left: calc(var(--spacing-unit) * 1);
+            }
+
+            .progress-title {
+                font-size: 0.9375rem;
+            }
+
+            .progress-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 0.875rem;
+            }
+
+            .progress-name {
+                font-size: 0.8125rem;
+            }
+
+            .progress-status {
+                font-size: 0.6875rem;
+            }
+
+            .empty-icon {
+                font-size: 2rem;
+            }
+
+            .empty-text {
+                font-size: 0.9375rem;
+            }
+
+            .empty-subtext {
+                font-size: 0.75rem;
+            }
+
+            .ai-chat-container {
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+            }
+
+            .ai-chat-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.75rem;
+            }
+
+            .ai-chat-title {
+                font-size: 1.125rem;
+            }
+
+            .ai-chat-btn {
+                padding: calc(var(--spacing-unit) * 1.25) calc(var(--spacing-unit) * 2.5);
+                font-size: 0.9375rem;
+            }
+
+            .ai-message {
+                max-width: 95%;
+            }
+
+            .ai-message-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 0.75rem;
+            }
+
+            .ai-message-content {
+                padding: calc(var(--spacing-unit) * 1.25);
+                font-size: 0.875rem;
+            }
+
+            .ai-chat-input {
+                padding: calc(var(--spacing-unit) * 1.25) calc(var(--spacing-unit) * 1.5);
+                font-size: 0.875rem;
+                min-height: 48px;
+            }
+
+            .ai-chat-send {
+                width: 48px;
+                height: 48px;
+                font-size: 1.125rem;
+            }
+        }
+
+        .why-email {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: calc(var(--spacing-unit) * 1);
+            text-align: center;
+            transition: color var(--transition-normal);
+        }
+
+        @media (max-width: 400px) {
+            .auth-card {
+                max-width: 320px;
+            }
+
+            .upload-progress {
+                width: 98%;
+                right: calc(var(--spacing-unit) * 0.5);
+                left: calc(var(--spacing-unit) * 0.5);
+            }
+        }
+
+        /* 预览按钮 */
+        .file-btn.preview-btn {
+            background: rgba(100, 223, 223, 0.1);
+            color: var(--secondary);
+            transition: background-color var(--transition-normal), color var(--transition-normal), transform var(--transition-fast);
+        }
+
+        .file-btn.preview-btn:hover {
+            background: rgba(100, 223, 223, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .file-btn.preview-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 预览模态框 */
+        .preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            /* 确保高于其他模态框 */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-normal);
+        }
+
+        .preview-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .preview-container {
+            width: 90%;
+            max-width: 1000px;
+            height: 80vh;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateY(50px);
+            opacity: 0;
+            transition: transform var(--transition-normal), opacity var(--transition-normal);
+        }
+
+        .preview-modal.visible .preview-container {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .preview-header {
+            padding: calc(var(--spacing-unit) * 2);
+            background: var(--bg-tertiary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .preview-title {
+            font-weight: 600;
+            font-size: 1.125rem;
+            color: var(--text-primary);
+        }
+
+        .preview-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            color: var(--text-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-close:hover {
+            color: var(--text-primary);
+            transform: rotate(90deg);
+        }
+
+        .preview-content {
+            flex: 1;
+            padding: calc(var(--spacing-unit) * 2);
+            overflow: auto;
+            background: var(--bg-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .preview-content img,
+        .preview-content video,
+        .preview-content audio {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .preview-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .preview-content embed {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .preview-content object {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .preview-content h1,
+        .preview-content h2,
+        .preview-content h3,
+        .preview-content h4,
+        .preview-content h5,
+        .preview-content h6 {
+            margin: 0;
+            padding: 0;
+        }
+
+
+
+        .preview-content pre {
+            white-space: pre-wrap;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+            padding: calc(var(--spacing-unit) * 1.5);
+            border-radius: 10px;
+            max-width: 100%;
+            overflow: auto;
+        }
+
+        .preview-error {
+            color: var(--danger);
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        /* 响应式 */
+        @media (max-width: 576px) {
+            .preview-container {
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+            }
+        }
+
+        .storage-section {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: calc(var(--spacing-unit) * 3);
+            box-shadow: var(--shadow-md);
+            transition: transform var(--transition-normal), box-shadow var(--transition-normal), background-color var(--transition-normal);
+        }
+
+        .storage-section:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .storage-info {
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 1.5);
+        }
+
+        .storage-text {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            transition: color var(--transition-normal);
+        }
+
+        .storage-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            transition: background-color var(--transition-normal);
+        }
+
+        .storage-fill {
+            height: 100%;
+            background: var(--primary-gradient);
+            border-radius: 4px;
+            transition: width var(--transition-normal);
+        }
+
+        .storage-percentage {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-align: right;
+            transition: color var(--transition-normal);
+        }
+
+        .expand-btn {
+            background: var(--secondary-gradient);
+            color: white;
+            border: none;
+            padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 2);
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            cursor: pointer;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+            align-self: flex-start;
+        }
+
+        .expand-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(100, 223, 223, 0.3);
+        }
+
+        .expand-btn:active {
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 768px) {
+            .storage-section {
+                padding: calc(var(--spacing-unit) * 2);
+            }
+        }
+
+        @media (max-width: 576px) {
+            ._shutdown-text {
+                font-size: 0.75rem;
+            }
+
+            .storage-text {
+                font-size: 0.875rem;
+            }
+
+            .storage-percentage {
+                font-size: 0.75rem;
+            }
+
+            .expand-btn {
+                font-size: 0.875rem;
+                padding: calc(var(--spacing-unit) * 0.75) calc(var(--spacing-unit) * 1.5);
+            }
+        }
+
+        .expand-modal,
+        .payment-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1002;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-normal);
+            backdrop-filter: blur(5px);
+        }
+
+        .expand-modal.visible,
+        .payment-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .expand-container,
+        .payment-container {
+            width: 90%;
+            max-width: 600px;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            transform: translateY(50px);
+            opacity: 0;
+            transition: transform var(--transition-normal), opacity var(--transition-normal);
+        }
+
+        .expand-modal.visible .expand-container,
+        .payment-modal.visible .payment-container {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .expand-header,
+        .payment-header {
+            padding: calc(var(--spacing-unit) * 2);
+            background: var(--bg-tertiary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .expand-title,
+        .payment-title {
+            font-weight: 600;
+            font-size: 1.125rem;
+            color: var(--text-primary);
+        }
+
+        .expand-close,
+        .payment-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            color: var(--text-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .expand-close:hover,
+        .payment-close:hover {
+            color: var(--text-primary);
+            transform: rotate(90deg);
+        }
+
+        .expand-options {
+            display: flex;
+            gap: calc(var(--spacing-unit) * 1.5);
+            padding: calc(var(--spacing-unit) * 2);
+        }
+
+        .expand-option {
+            flex: 1;
+            padding: calc(var(--spacing-unit) * 1.5);
+            border-radius: 12px;
+            background: var(--bg-tertiary);
+            text-align: center;
+            cursor: pointer;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+            border: 2px solid transparent;
+        }
+
+        .expand-option:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .expand-option.active {
+            border-color: var(--primary);
+        }
+
+        .expand-capacity {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .expand-price {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: calc(var(--spacing-unit) * 0.5);
+        }
+
+        .expand-payment {
+            padding: calc(var(--spacing-unit) * 2);
+            border-top: 1px solid var(--border);
+        }
+
+        .payment-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: calc(var(--spacing-unit) * 1.5);
+            color: var(--text-primary);
+        }
+
+        .payment-options {
+            display: flex;
+            gap: calc(var(--spacing-unit) * 1.5);
+        }
+
+        .payment-option {
+            flex: 1;
+            padding: calc(var(--spacing-unit) * 1.5);
+            border-radius: 12px;
+            background: var(--bg-tertiary);
+            text-align: center;
+            cursor: pointer;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+            border: 2px solid transparent;
+        }
+
+        .payment-option:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .payment-option.active {
+            border-color: var(--secondary);
+        }
+
+        .payment-icon {
+            font-size: 2rem;
+            margin-bottom: calc(var(--spacing-unit) * 1);
+        }
+
+        .payment-name {
+            font-weight: 600;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+        }
+
+        .payment-content {
+            padding: calc(var(--spacing-unit) * 2);
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 2);
+        }
+
+        .payment-info {
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+        }
+
+        .payment-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 3);
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .payment-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(94, 96, 206, 0.3);
+        }
+
+        .payment-btn:active {
+            transform: scale(0.98);
+        }
+
+        @media (max-width: 576px) {
+
+            .expand-container,
+            .payment-container {
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+            }
+
+            .expand-options,
+            .payment-options {
+                flex-direction: column;
+            }
+
+            .expand-option,
+            .payment-option {
+                padding: calc(var(--spacing-unit) * 1);
+            }
+
+            .payment-btn {
+                font-size: 0.9375rem;
+                padding: calc(var(--spacing-unit) * 1.25) calc(var(--spacing-unit) * 2.5);
+            }
+        }
+
+        .legal-notice {
+            font-size: 0.75rem;
+            color: var(--danger);
+            margin-top: calc(var(--spacing-unit) * 1);
+            transition: color var(--transition-normal);
+        }
+
+        @media (max-width: 576px) {
+            .legal-notice {
+                font-size: 0.6875rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-container" id="authContainer">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>阿梦云盘</h1>
+                <p>安全存储您的所有文件</p>
+            </div>
+            <div class="auth-tabs">
+                <div class="auth-tab active" data-tab="login">登录</div>
+                <div class="auth-tab" data-tab="register">注册</div>
+            </div>
+            <div class="auth-body">
+                <form class="auth-form active" id="loginForm">
+                    <div class="form-group">
+                        <label for="loginUsername">用户名</label>
+                        <input type="text" id="loginUsername" placeholder="请输入用户名" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">密码</label>
+                        <input type="password" id="loginPassword" placeholder="请输入密码" required>
+                    </div>
+                    <button type="submit" class="auth-btn" id="loginBtn">
+                        登录
+                        <div class="loader"></div>
+                    </button>
+                </form>
+                <form class="auth-form" id="registerForm">
+                    <div class="form-group">
+                        <label for="registerUsername">用户名</label>
+                        <input type="text" id="registerUsername" placeholder="请输入用户名" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">邮箱</label>
+                        <input type="email" id="registerEmail" placeholder="请输入邮箱" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">密码</label>
+                        <input type="password" id="registerPassword" placeholder="请输入密码" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">确认密码</label>
+                        <input type="password" id="confirmPassword" placeholder="请再次输入密码" required>
+                    </div>
+                    <div class="why-email">为什么邮箱?邮箱用于接收更新通知</div>
+                    <button type="submit" class="auth-btn" id="registerBtn">
+                        注册
+                        <div class="loader"></div>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" id="appContainer">
+        <header class="header">
+            <a href="#" class="logo">
+                <div class="logo-icon">梦</div>
+                <div class="logo-text">阿梦云盘</div>
+            </a>
+            <div class="user-menu">
+                <div class="user-avatar" id="userAvatar">用</div>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+                <button class="logout-btn" id="logoutBtn" title="退出登录">退出登录</button>
+            </div>
+        </header>
+        <div class="main-content">
+            <div class="upload-section">
+                <h2 class="section-title">上传文件</h2>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon animate-float">⬆️</div>
+                    <div class="upload-text">拖放文件到此处</div>
+                    <div class="upload-subtext">或点击下方按钮选择文件</div>
+                    <div class="legal-notice">请遵守相关法律法规，严禁上传违法文件</div>
+                    <button class="upload-btn" id="uploadBtn">选择文件</button>
+                    <input type="file" class="upload-input" id="fileInput" multiple>
+                </div>
+            </div>
+
+            <div class="storage-section">
+                <h2 class="section-title">存储容量</h2>
+                <div class="storage-info">
+                    <div class="storage-text">已使用 <span id="usedStorage">0 B</span> / 总共 <span id="totalStorage">5
+                            GB</span></div>
+                    <div class="storage-bar">
+                        <div class="storage-fill" id="storageFill" style="width: 0%"></div>
+                    </div>
+                    <div class="storage-percentage" id="storagePercentage">0%</div>
+                    <button class="expand-btn" id="expandStorageBtn">扩容</button>
+                </div>
+            </div>
+
+            <div class="files-section">
+                <h2 class="section-title">我的文件(支持图片，视频，pdf的预览)</h2>
+                <div class="files-list" id="filesList">
+                    <div class="empty-files" id="emptyFiles">
+                        <div class="empty-icon">📁</div>
+                        <div class="empty-text">暂无文件</div>
+                        <div class="empty-subtext">上传文件后将显示在这里</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 新增AI聊天入口 -->
+            <div class="ai-chat-section">
+                <h2 class="section-title">AI智能问答</h2>
+                <div class="ai-chat-intro">
+                    <div class="ai-chat-icon">🤖</div>
+                    <div class="ai-chat-title">智能AI助手</div>
+                    <div class="ai-chat-description">使用先进的AI模型解答您的问题，支持文档，图片理解和自然语言问答，为您提供专业、准确的回答。</div>
+                    <button class="ai-chat-btn" id="openAiChat">
+                        <span>开始对话</span>
+                        <span>💬</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI聊天模态框 -->
+    <div class="ai-chat-modal" id="aiChatModal">
+        <div class="ai-chat-container">
+            <div class="ai-chat-header">
+                <div class="ai-chat-header-title">
+                    <span>AI智能问答</span>
+                    <span id="currentModelName">文档理解</span>
+                </div>
+                <button class="ai-chat-close" id="closeAiChat">✕</button>
+            </div>
+            <div class="ai-model-selector" id="aiModelSelector">
+                <div class="ai-model-option douban active" data-model="douban">
+                    <div class="ai-model-icon">文</div>
+                    <div class="ai-model-info">
+                        <div class="ai-model-name">文档理解</div>
+                        <div class="ai-model-description">说出需要理解的文档名称</div>
+                    </div>
+                </div>
+                <div class="ai-model-option tongyi" data-model="tongyi">
+                    <div class="ai-model-icon">图</div>
+                    <div class="ai-model-info">
+                        <div class="ai-model-name">图片理解</div>
+                        <div class="ai-model-description">说出需要理解的图片名称</div>
+                    </div>
+                </div>
+                <div class="ai-model-option deepseek" data-model="deepseek">
+                    <div class="ai-model-icon">答</div>
+                    <div class="ai-model-info">
+                        <div class="ai-model-name">问答</div>
+                        <div class="ai-model-description">你的得力助手</div>
+                    </div>
+                </div>
+            </div>
+            <div class="ai-chat-messages" id="aiChatMessages">
+                <!-- 消息将在这里动态生成 -->
+            </div>
+            <div class="ai-chat-input-container">
+                <div class="ai-chat-input-wrapper">
+                    <textarea class="ai-chat-input" id="aiChatInput" placeholder="输入您的问题..." rows="1"></textarea>
+                    <button class="ai-chat-send douban" id="aiChatSend">
+                        <span class="send-icon">↑</span>
+                        <div class="loader"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- 预览模态框 -->
+    <div class="preview-modal" id="previewModal">
+        <div class="preview-container">
+            <div class="preview-header">
+                <div class="preview-title" id="previewTitle">文件预览</div>
+                <button class="preview-close" id="closePreview">✕</button>
+            </div>
+            <div class="preview-content" id="previewContent"></div>
+        </div>
+    </div>
+
+    <!-- 扩容模态框 -->
+    <div class="expand-modal" id="expandModal">
+        <div class="expand-container">
+            <div class="expand-header">
+                <div class="expand-title">选择扩容容量</div>
+                <button class="expand-close" id="closeExpand">✕</button>
+            </div>
+            <div class="expand-options">
+                <div class="expand-option" data-capacity="1">
+                    <div class="expand-capacity">1 GB</div>
+                    <div class="expand-price">10 元</div>
+                </div>
+                <div class="expand-option" data-capacity="5">
+                    <div class="expand-capacity">5 GB</div>
+                    <div class="expand-price">50 元</div>
+                </div>
+                <div class="expand-option" data-capacity="10">
+                    <div class="expand-capacity">10 GB</div>
+                    <div class="expand-price">100 元</div>
+                </div>
+            </div>
+            <div class="expand-payment">
+                <div class="payment-title">选择支付方式</div>
+                <div class="payment-options">
+                    <div class="payment-option wechat" data-method="wechat">
+                        <div class="payment-icon">💚</div>
+                        <div class="payment-name">微信支付</div>
+                    </div>
+                    <div class="payment-option alipay" data-method="alipay">
+                        <div class="payment-icon">💙</div>
+                        <div class="payment-name">支付宝</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 支付模态框 -->
+    <div class="payment-modal" id="paymentModal">
+        <div class="payment-container">
+            <div class="payment-header">
+                <div class="payment-title">支付</div>
+                <button class="payment-close" id="closePayment">✕</button>
+            </div>
+            <div class="payment-content">
+                <div class="payment-info">
+                    <div>扩容容量: <span id="paymentCapacity">1 GB</span></div>
+                    <div>支付金额: <span id="paymentAmount">10 元</span></div>
+                    <div>支付方式: <span id="paymentMethod">微信支付</span></div>
+                </div>
+                <button class="payment-btn" id="confirmPayment">确认支付</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="upload-progress" id="uploadProgress">
+        <div class="progress-header">
+            <div class="progress-title">正在上传</div>
+            <button class="progress-close" id="closeProgress">✕</button>
+        </div>
+        <div id="progressItems"></div>
+    </div>
+
+    <script>
+        const INITIAL_STORAGE = 5 * 1024 * 1024 * 1024; // 5GB in bytes
+        let totalStorage = parseInt(localStorage.getItem('totalStorage')) || INITIAL_STORAGE;
+        const authContainer = document.getElementById('authContainer');
+        const appContainer = document.getElementById('appContainer');
+        const authTabs = document.querySelectorAll('.auth-tab');
+        const authForms = document.querySelectorAll('.auth-form');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userAvatar = document.getElementById('userAvatar');
+        const themeToggle = document.getElementById('themeToggle');
+        const uploadArea = document.getElementById('uploadArea');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileInput = document.getElementById('fileInput');
+        const filesList = document.getElementById('filesList');
+        const emptyFiles = document.getElementById('emptyFiles');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const closeProgress = document.getElementById('closeProgress');
+        const progressItems = document.getElementById('progressItems');
+
+        // 扩容相关元素
+        const expandModal = document.getElementById('expandModal');
+        const closeExpand = document.getElementById('closeExpand');
+        const expandStorageBtn = document.getElementById('expandStorageBtn');
+        const paymentModal = document.getElementById('paymentModal');
+        const closePayment = document.getElementById('closePayment');
+        const confirmPayment = document.getElementById('confirmPayment');
+        const paymentCapacity = document.getElementById('paymentCapacity');
+        const paymentAmount = document.getElementById('paymentAmount');
+        const paymentMethodEl = document.getElementById('paymentMethod');
+
+        // AI聊天相关元素
+        const openAiChat = document.getElementById('openAiChat');
+        const aiChatModal = document.getElementById('aiChatModal');
+        const closeAiChat = document.getElementById('closeAiChat');
+        const aiModelSelector = document.getElementById('aiModelSelector');
+        const aiModelOptions = document.querySelectorAll('.ai-model-option');
+        const aiChatMessages = document.getElementById('aiChatMessages');
+        const aiChatInput = document.getElementById('aiChatInput');
+        const aiChatSend = document.getElementById('aiChatSend');
+        const currentModelName = document.getElementById('currentModelName');
+
+        // 预览相关的 DOM 元素
+        const previewModal = document.getElementById('previewModal');
+        const closePreview = document.getElementById('closePreview');
+        const previewContent = document.getElementById('previewContent');
+        const previewTitle = document.getElementById('previewTitle');
+
+        // 打开扩容模态框
+        expandStorageBtn.addEventListener('click', () => {
+            expandModal.classList.add('visible');
+        });
+
+        // 关闭扩容模态框
+        closeExpand.addEventListener('click', () => {
+            expandModal.classList.remove('visible');
+        });
+
+        // 点击模态框背景关闭
+        expandModal.addEventListener('click', (e) => {
+            if (e.target === expandModal) {
+                expandModal.classList.remove('visible');
+            }
+        });
+
+        // 选择扩容容量
+        let selectedCapacity = 1; // 默认 1GB
+        let selectedMethod = 'wechat'; // 默认微信支付
+        const expandOptions = document.querySelectorAll('.expand-option');
+        expandOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                expandOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                selectedCapacity = parseInt(option.dataset.capacity);
+            });
+        });
+
+        // 选择支付方式并打开支付模态框
+        const paymentOptions = document.querySelectorAll('.payment-option');
+        paymentOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                paymentOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                selectedMethod = option.dataset.method;
+                paymentCapacity.textContent = `${selectedCapacity} GB`;
+                paymentAmount.textContent = `${selectedCapacity * 10} 元`;
+                paymentMethodEl.textContent = selectedMethod === 'wechat' ? '微信支付' : '支付宝';
+                expandModal.classList.remove('visible');
+                paymentModal.classList.add('visible');
+            });
+        });
+
+        // 关闭支付模态框
+        closePayment.addEventListener('click', () => {
+            paymentModal.classList.remove('visible');
+        });
+
+        // 点击支付模态框背景关闭
+        paymentModal.addEventListener('click', (e) => {
+            if (e.target === paymentModal) {
+                paymentModal.classList.remove('visible');
+            }
+        });
+
+        // 确认支付（模拟）
+        confirmPayment.addEventListener('click', () => {
+            totalStorage += selectedCapacity * 1024 * 1024 * 1024; // 增加容量
+            localStorage.setItem('totalStorage', totalStorage);
+            updateStorageDisplay();
+            paymentModal.classList.remove('visible');
+            alert('支付成功！存储容量已增加。');
+        });
+
+        // 更新存储显示
+        function updateStorageDisplay() {
+            const usedStorage = userFiles.reduce((total, file) => total + parseInt(file.size), 0);
+            const percentage = (usedStorage / totalStorage) * 100;
+            const usedStorageEl = document.getElementById('usedStorage');
+            const totalStorageEl = document.getElementById('totalStorage');
+            const storageFill = document.getElementById('storageFill');
+            const storagePercentage = document.getElementById('storagePercentage');
+
+            usedStorageEl.textContent = formatFileSize(usedStorage);
+            totalStorageEl.textContent = formatFileSize(totalStorage);
+            storageFill.style.width = `${percentage.toFixed(2)}%`;
+            storagePercentage.textContent = `${percentage.toFixed(2)}%`;
+        }
+
+        // 判断文件是否支持预览
+        function isFilePreviewable(mimeType) {
+            return (
+                mimeType.startsWith('image/') ||
+                mimeType.startsWith('video/') ||
+                mimeType.startsWith('audio/') ||
+                mimeType.includes('pdf') ||
+                mimeType.includes('text') ||
+                mimeType.includes('application/vnd.openxmlformats-officedocument.wordprocessingml.document') // 添加 docx
+            );
+        }
+
+        // 预览文件
+        async function previewFile(fileObj) {
+            console.log('开始预览文件:', fileObj);
+            const user = JSON.parse(localStorage.getItem('user'));
+            try {
+                const response = await fetch(`${API_BASE_URL}/files/download?id=${encodeURIComponent(fileObj.id)}&userIdn=${encodeURIComponent(user.id)}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const filePath = await response.text();
+                    console.log('获取文件路径:', filePath);
+                    if (filePath) {
+                        const baseUrl = NGINX_BASE_URL.endsWith('/') ? NGINX_BASE_URL.slice(0, -1) : NGINX_BASE_URL;
+                        const path = filePath.startsWith('/') ? filePath.slice(1) : filePath;
+                        const fileUrl = `${baseUrl}/${path}`;
+                        console.log('PDF文件URL:', fileUrl); // 调试输出
+                        previewTitle.textContent = fileObj.name;
+                        previewContent.innerHTML = '';
+
+                        if (fileObj.type.startsWith('image/')) {
+                            const img = document.createElement('img');
+                            img.src = encodeURI(fileUrl);
+                            img.alt = fileObj.name;
+                            previewContent.appendChild(img);
+                        } else if (fileObj.type.startsWith('video/')) {
+                            const video = document.createElement('video');
+                            video.src = encodeURI(fileUrl);
+                            video.controls = true;
+                            previewContent.appendChild(video);
+                        } else if (fileObj.type.startsWith('audio/')) {
+                            const audio = document.createElement('audio');
+                            audio.src = encodeURI(fileUrl);
+                            audio.controls = true;
+                            previewContent.appendChild(audio);
+                        } else if (fileObj.type.includes('pdf')) {
+                            const embed = document.createElement('embed');
+                            console.log('PDF文件URL:', fileUrl);
+                            embed.src = encodeURI(fileUrl);
+                            embed.type = 'application/pdf';
+                            embed.width = '100%';
+                            embed.height = '600px';
+                            embed.onerror = () => {
+                                console.error('PDF 加载失败:', fileUrl);
+                                previewContent.innerHTML = `
+                            <div class="preview-error">
+                                无法预览 PDF 文件，可能是服务器或浏览器问题。
+                                <br>
+                                <a href="${encodeURI(fileUrl)}" target="_blank">点击下载 PDF</a>
+                            </div>
+                        `;
+                                console.log('embed:', embed);
+                            };
+                            previewContent.appendChild(embed);
+                        } else if (fileObj.type.includes('text') || fileObj.type === 'application/octet-stream') {
+                            const textResponse = await fetch(encodeURI(fileUrl), {
+                                method: 'GET',
+                                credentials: 'include' // 确保携带认证信息
+                            });
+                            if (textResponse.ok) {
+                                const text = await textResponse.text();
+                                const pre = document.createElement('pre');
+                                pre.style.whiteSpace = 'pre-wrap'; // 允许换行
+                                pre.style.maxHeight = '600px'; // 限制高度
+                                pre.style.overflowY = 'auto'; // 添加滚动条
+                                pre.textContent = text || '文件内容为空';
+                                previewContent.appendChild(pre);
+                            } else {
+                                console.error('获取文本文件失败，状态:', textResponse.status);
+                                previewContent.innerHTML = `
+            <div class="preview-error">
+                无法加载文本文件，状态码: ${textResponse.status}。
+                <br>
+                <a href="${encodeURI(fileUrl)}" target="_blank">点击下载文件</a>
+            </div>
+        `;
+                            }
+                        } else if (fileObj.type.includes('application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
+                            // 使用 Office Online 预览 .docx 文件
+                            const iframe = document.createElement('iframe');
+                            iframe.src = `window.open("https://view.xdocin.com/view?src=" + encodeURIComponent(fileUrl));`;
+                            iframe.width = "100%";
+                            iframe.height = "500px";
+                            iframe.frameBorder = "0";
+                            iframe.style.border = "none";
+                            iframe.onerror = () => {
+                                console.error('Office Online 预览失败:', fileUrl);
+                                previewContent.innerHTML = `
+                            <div class="preview-error">
+                                无法预览 DOCX 文件，可能是文件链接问题。
+                                <br>
+                                <a href="${encodeURI(fileUrl)}" target="_blank">点击下载 DOCX</a>
+                            </div>
+                        `;
+                            };
+                            previewContent.appendChild(iframe);
+                        }
+                        else {
+                            // 使用 Office Online 预览 .docx 文件
+                            const iframe = document.createElement('iframe');
+                            iframe.src = `window.open("https://view.xdocin.com/view?src=" + encodeURIComponent(fileUrl))`;
+                            iframe.width = "100%";
+                            iframe.height = "500px";
+                            iframe.frameBorder = "0";
+                            iframe.style.border = "none";
+                            iframe.onerror = () => {
+                                console.error('Office Online 预览失败:', fileUrl);
+                                previewContent.innerHTML = `
+                            <div class="preview-error">
+                                无法预览 DOCX 文件，可能是文件链接问题。
+                                <br>
+                                <a href="${encodeURI(fileUrl)}" target="_blank">点击下载 DOCX</a>
+                            </div>
+                        `;
+                            };
+                            previewContent.appendChild(iframe);
+                        }
+
+                        previewModal.classList.add('visible');
+                        console.log('显示预览模态框，URL:', fileUrl);
+                    } else {
+                        alert('无法预览文件：文件路径为空');
+                    }
+                } else {
+                    alert('无法预览文件：服务器响应错误');
+                }
+            } catch (error) {
+                console.error('预览错误:', error);
+                alert('网络错误，请稍后重试');
+            }
+        }
+
+        // 关闭预览模态框
+        if (closePreview) {
+            closePreview.addEventListener('click', () => {
+                console.log('关闭预览模态框');
+                previewModal.classList.remove('visible');
+                previewContent.innerHTML = '';
+            });
+        }
+
+        // 点击模态框背景关闭
+        if (previewModal) {
+            previewModal.addEventListener('click', (e) => {
+                if (e.target === previewModal) {
+                    console.log('点击背景关闭预览模态框');
+                    previewModal.classList.remove('visible');
+                    previewContent.innerHTML = '';
+                }
+            });
+        }
+
+        let userFiles = [];
+        const API_BASE_URL = 'http://175.24.205.213:8085'; // 后端服务地址
+        const NGINX_BASE_URL = 'http://175.24.205.213:88'; // Nginx 文件服务地址
+
+        // 当前选择的AI模型
+        let currentModel = 'douban';
+
+        // 日夜间模式切换
+        function checkTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeToggle.textContent = '☀️';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                themeToggle.textContent = '🌙';
+            }
+            console.log('主题初始化:', savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            console.log('切换主题:', newTheme);
+        }
+
+        // 检查登录状态
+        async function checkLoginStatus() {
+            try {
+                // 从本地获取用户信息
+                const userInfo = localStorage.getItem('user');
+                console.log('用户信息:', userInfo);
+
+                if (userInfo) {
+                    const user = JSON.parse(userInfo);
+                    if (user && user.username) {
+                        showApp(user.username);
+                        loadFiles();
+                    }
+                }
+            } catch (error) {
+                console.log('未登录或获取用户信息失败:', error);
+            }
+            checkTheme();
+        }
+
+        async function checkLoginStatus2() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/getCurrentUser`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                if (response.ok) {
+                    const user = await response.json();
+                    if (user && user.username) {
+                        console.log('用户已登录:', user.username);
+                    }
+                }
+            } catch (error) {
+                console.log('未登录或会话已过期:', error);
+                // 如果未登录，显示登录界面
+                authContainer.classList.remove('hidden');
+                appContainer.classList.remove('visible');
+                console.log('未登录或会话已过期');
+            }
+            checkTheme();
+        }
+
+        // 每隔5秒刷新一次登录状态
+        // setInterval(checkLoginStatus2, 5000);
+
+        function showApp(username) {
+            authContainer.classList.add('hidden');
+            appContainer.classList.add('visible');
+            userAvatar.textContent = username.charAt(0).toUpperCase();
+        }
+
+        // 登录/注册切换
+        authTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+                authTabs.forEach(t => t.classList.remove('active'));
+                authForms.forEach(f => f.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`${tabName}Form`).classList.add('active');
+            });
+        });
+
+        // 登录
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const rememberMe = 1;
+
+            if (!username || !password) {
+                alert('请输入用户名和密码');
+                return;
+            }
+
+            loginBtn.classList.add('loading');
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&rememberMe=${encodeURIComponent(rememberMe)}`, {
+                    method: 'POST',
+                    credentials: 'include' // 确保后端设置 Cookie
+                });
+                console.log('登录响应状态:', response.status); // 调试日志
+                const user = await response.json();
+                console.log('登录返回的用户:', user); // 调试日志
+
+                if (response.ok && user && user.username) {
+                    localStorage.setItem('user', JSON.stringify(user));
+                    showApp(user.username);
+                    loginForm.reset();
+                    loadFiles();
+                } else {
+                    alert('用户名或密码错误');
+                }
+            } catch (error) {
+                alert('网络错误，请稍后重试');
+                console.error('登录错误:', error);
+            } finally {
+                loginBtn.classList.remove('loading');
+            }
+        });
+
+        // 注册
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('registerUsername').value.trim();
+            const password = document.getElementById('registerPassword').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+
+            if (!username || !password) {
+                alert('请输入用户名和密码');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('两次输入的密码不一致');
+                return;
+            }
+
+            registerBtn.classList.add('loading');
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/register?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&email=${encodeURIComponent(email)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include' // 确保后端设置 Cookie
+                });
+                console.log('注册响应状态:', response.status); // 调试日志
+                const result = await response.json();
+                console.log('注册返回结果:', result); // 调试日志
+
+                if (response.ok) {
+                    const user = { username, id: result.userId };
+                    localStorage.setItem('user', JSON.stringify(user));
+                    showApp(username);
+                    registerForm.reset();
+                    loadFiles();
+                } else {
+                    alert(result.message || '注册失败');
+                }
+            } catch (error) {
+                alert('网络错误，请稍后重试');
+                console.error('注册错误:', error);
+            } finally {
+                registerBtn.classList.remove('loading');
+            }
+        });
+
+        // 登出
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                console.log('登出响应状态:', response.status); // 调试日志
+                if (response.ok) {
+                    localStorage.removeItem('user');
+                    appContainer.classList.remove('visible');
+                    authContainer.classList.remove('hidden');
+                    userFiles = [];
+                    filesList.innerHTML = '';
+                    emptyFiles.style.display = 'block';
+                } else {
+                    alert('登出失败，请稍后重试');
+                }
+            } catch (error) {
+                console.error('登出失败:', error);
+                alert('登出失败，请稍后重试');
+            }
+        });
+
+        // 主题切换
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // 文件上传事件
+        // 拖放事件（桌面端）
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                console.log('拖放文件:', files);
+                handleFiles(files);
+            }
+        });
+
+        // 上传按钮点击（手机端和桌面端）
+        uploadBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('点击上传按钮');
+            fileInput.click();
+        });
+
+        // 触摸事件（手机端优化）
+        uploadBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            console.log('触摸上传按钮');
+            fileInput.click();
+        }, { passive: false });
+
+        // 文件输入框变化
+        fileInput.addEventListener('change', (e) => {
+            console.log('文件输入框变化，文件数量:', e.target.files.length);
+            if (e.target.files.length > 0) {
+                handleFiles(e.target.files);
+                fileInput.value = ''; // 清空输入，防止重复触发
+            }
+        });
+
+        // 处理文件上传
+        async function handleFiles(files) {
+            console.log('处理文件:', files);
+            uploadProgress.classList.add('visible');
+            progressItems.innerHTML = ''; // 清空进度条
+
+            for (const file of Array.from(files)) {
+                const progressItem = document.createElement('div');
+                progressItem.className = 'progress-item';
+                const fileIcon = getFileIcon(file.type);
+
+                progressItem.innerHTML = `
+                    <div class="progress-icon">${fileIcon}</div>
+                    <div class="progress-info">
+                        <div class="progress-name">${file.name}</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-status">0% - 正在上传...</div>
+                    </div>
+                `;
+                progressItems.appendChild(progressItem);
+                await uploadFile(progressItem, file);
+            }
+        }
+
+        // 上传单个文件
+        async function uploadFile(progressItem, file) {
+            const progressFill = progressItem.querySelector('.progress-fill');
+            const progressStatus = progressItem.querySelector('.progress-status');
+            const formData = new FormData();
+            formData.append('file', file);
+            const user = JSON.parse(localStorage.getItem('user'));
+
+            try {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', `${API_BASE_URL}/files/upload?userIdn=${user.id}`, true);
+                xhr.withCredentials = true;
+
+                xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable) {
+                        const percent = Math.round((event.loaded / event.total) * 100);
+                        progressFill.style.width = `${percent}%`;
+                        progressStatus.textContent = `${percent}% - 正在上传...`;
+                    }
+                };
+
+                xhr.onload = async () => {
+                    console.log('上传响应状态:', xhr);
+                    console.log('上传响应文本:', xhr.responseText); // 调试日志
+                    if (xhr != null) {
+                        const success = JSON.parse(xhr.status);
+                        if (success) {
+                            progressStatus.textContent = '上传完成';
+                            await loadFiles();
+                            updateStorageDisplay(); // 更新容量显示
+                            checkAllUploadsComplete();
+                        } else {
+                            progressStatus.textContent = '上传失败';
+                        }
+                    } else {
+                        progressStatus.textContent = '上传失败';
+                    }
+                };
+
+                xhr.onerror = () => {
+                    progressStatus.textContent = '网络错误';
+                };
+
+                xhr.send(formData);
+            } catch (error) {
+                progressStatus.textContent = '网络错误';
+                console.error('上传错误:', error);
+            }
+        }
+
+        // 检查所有上传是否完成
+        function checkAllUploadsComplete() {
+            const statuses = document.querySelectorAll('.progress-status');
+            const allComplete = Array.from(statuses).every(status =>
+                status.textContent === '上传完成' || status.textContent.includes('错误') || status.textContent.includes('失败')
+            );
+            if (allComplete) {
+                setTimeout(() => {
+                    uploadProgress.classList.remove('visible');
+                    progressItems.innerHTML = '';
+                }, 2000);
+            }
+        }
+
+        closeProgress.addEventListener('click', () => {
+            uploadProgress.classList.remove('visible');
+            progressItems.innerHTML = '';
+        });
+
+        // 加载文件列表
+        async function loadFiles() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            try {
+                const response = await fetch(`${API_BASE_URL}/files/getFilesList?userIdn=${user.id}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                const files = await response.json();
+
+                if (response.ok) {
+                    userFiles = files || [];
+                    filesList.innerHTML = '';
+                    if (userFiles.length === 0) {
+                        emptyFiles.style.display = 'block';
+                    } else {
+                        emptyFiles.style.display = 'none';
+                        userFiles.forEach(file => addFileToUI(file));
+                    }
+                    updateStorageDisplay(); // 添加容量显示更新
+                } else {
+                    alert('获取文件列表失败');
+                }
+            } catch (error) {
+                alert('网络错误，请稍后重试');
+                console.error('加载文件列表错误:', error);
+            }
+        }
+
+        function addFileToUI(fileObj) {
+            console.log('添加文件到 UI:', fileObj); // 调试日志
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.dataset.id = String(fileObj.id);
+            fileItem.style.opacity = '0';
+            fileItem.style.transform = 'translateY(10px)';
+
+            const fileIcon = getFileIcon(fileObj.type);
+            const fileType = getFileType(fileObj.type);
+            const isPreviewable = isFilePreviewable(fileObj.type);
+
+            fileItem.innerHTML = `
+        <div class="file-icon ${fileType}">${fileIcon}</div>
+        <div class="file-info">
+            <div class="file-name">${fileObj.name}</div>
+            <div class="file-meta">
+        <span>${formatFileSize(parseInt(fileObj.size))}</span>
+        <span>${formatDate(fileObj.createdAt)}</span>
+    </div>
+        </div>
+        <div class="file-actions">
+            ${isPreviewable ? '<button class="file-btn preview-btn" title="预览">👁️预览</button>' : ''}
+            <button class="file-btn share-btn" title="分享">🔗分享</button>
+            <button class="file-btn download-btn" title="下载">⬇️下载</button>
+            <button class="file-btn delete-btn" title="删除">🗑️删除</button>
+        </div>
+    `;
+
+            const previewBtn = fileItem.querySelector('.preview-btn');
+            if (previewBtn) {
+                previewBtn.addEventListener('click', () => {
+                    console.log('点击预览按钮，文件:', fileObj.name);
+                    previewFile(fileObj);
+                });
+            }
+
+            const shareBtn = fileItem.querySelector('.share-btn');
+            shareBtn.addEventListener('click', () => {
+                console.log('点击分享按钮，文件:', fileObj);
+                shareFile(fileObj);
+            });
+
+            const downloadBtn = fileItem.querySelector('.download-btn');
+            downloadBtn.addEventListener('click', () => {
+                console.log('点击下载按钮，文件:', fileObj.name);
+                downloadFile(fileObj);
+            });
+
+            const deleteBtn = fileItem.querySelector('.delete-btn');
+            deleteBtn.addEventListener('click', () => {
+                console.log('点击删除按钮，文件:', fileObj.name);
+                deleteFile(fileObj.id);
+            });
+
+            filesList.appendChild(fileItem);
+
+            setTimeout(() => {
+                fileItem.style.opacity = '1';
+                fileItem.style.transform = 'translateY(0)';
+            }, 10);
+        }
+
+        function shareFile(fileObj) {
+            console.log('shareFile', fileObj);
+            if (!fileObj.path) {
+                console.error('文件路径缺失:', fileObj);
+                alert('无法分享：文件路径缺失');
+                return;
+            }
+
+            // 构造分享链接，确保没有多余的斜杠
+            const baseUrl = NGINX_BASE_URL.endsWith('/') ? NGINX_BASE_URL.slice(0, -1) : NGINX_BASE_URL;
+            const filePath = fileObj.path.startsWith('/') ? fileObj.path.slice(1) : fileObj.path;
+            const shareLink = `${baseUrl}/${filePath}`;
+            console.log('shareLink', shareLink);
+
+            // 尝试使用 navigator.clipboard API
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                navigator.clipboard.writeText(shareLink)
+                    .then(() => {
+                        console.log('链接已复制到剪贴板:', shareLink);
+                        alert(`文件链接已复制到剪贴板：${shareLink}`);
+                    })
+                    .catch((err) => {
+                        console.error('复制到剪贴板失败:', err);
+                        fallbackCopyTextToClipboard(shareLink); // 使用备选方案
+                    });
+            } else {
+                // 如果不支持，则调用备用函数
+                fallbackCopyTextToClipboard(shareLink);
+            }
+        }
+
+        // 备用复制文本到剪贴板的方法
+        function fallbackCopyTextToClipboard(text) {
+            var textArea = document.createElement("textarea");
+            textArea.value = text;
+
+            // 避免干扰页面布局
+            textArea.style.position = "fixed";
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.width = "2em";
+            textArea.style.height = "2em";
+            textArea.style.padding = "0";
+            textArea.style.border = "none";
+            textArea.style.outline = "none";
+            textArea.style.boxShadow = "none";
+            textArea.style.background = "transparent";
+
+            document.body.appendChild(textArea);
+            textArea.select();
+
+            try {
+                var successful = document.execCommand('copy');
+                var msg = successful ? '成功' : '失败';
+                console.log('Fallback: 复制文本命令执行' + msg);
+                alert(`文件链接已复制到剪贴板:${text}`);
+            } catch (err) {
+                console.error('Fallback: 复制文本到剪贴板失败', err);
+                alert(`复制链接失败，请手动复制：${text}`);
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        // 下载文件（修改部分）
+        async function downloadFile(fileObj) {
+            console.log('开始下载文件:', fileObj.name, 'ID:', fileObj.id);
+            const user = JSON.parse(localStorage.getItem('user'));
+            try {
+                const response = await fetch(`${API_BASE_URL}/files/download?id=${encodeURIComponent(fileObj.id)}&userIdn=${user.id}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                console.log('下载响应状态:', response.status, 'OK:', response.ok);
+                if (response.ok) {
+                    const filePath = await response.text();
+                    console.log('后端返回的 filePath:', filePath);
+                    if (filePath) {
+                        const downloadUrl = `${NGINX_BASE_URL}/${filePath}`;
+                        console.log('构造的下载 URL:', downloadUrl);
+                        try {
+                            const a = document.createElement('a');
+                            a.href = encodeURI(downloadUrl); // 编码 URL 处理中文文件名
+                            a.download = fileObj.name;
+                            console.log('设置 a 元素:', { href: a.href, download: a.download });
+                            document.body.appendChild(a);
+                            a.click();
+                            console.log('触发 a.click()');
+                            document.body.removeChild(a);
+                        } catch (e) {
+                            console.warn('a.click() 失败:', e);
+                            // 后备方案：提示用户手动打开链接
+                            if (confirm('无法自动下载，是否打开文件链接？')) {
+                                window.open(encodeURI(downloadUrl), '_blank');
+                                console.log('打开下载链接:', downloadUrl);
+                            }
+                        }
+                    } else {
+                        console.error('文件路径为空');
+                        alert('无法下载文件：文件路径为空');
+                    }
+                } else {
+                    console.error('下载请求失败，状态:', response.status);
+                    alert('下载失败：服务器响应错误');
+                }
+            } catch (error) {
+                console.error('下载错误:', error);
+                alert('网络错误，请稍后重试');
+            }
+        }
+
+        // 删除文件
+        async function deleteFile(id) {
+            const file = userFiles.find(f => String(f.id) === String(id));
+            if (!file) return;
+            const user = JSON.parse(localStorage.getItem('user'));
+
+            if (confirm(`确定要删除 ${file.name} 吗？`)) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/files/delete?id=${encodeURIComponent(id)}&userIdn=${user.id}`, {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+                    const success = await response.json();
+
+                    if (response.ok && success) {
+                        userFiles = userFiles.filter(f => String(f.id) !== String(id));
+                        const fileItem = document.querySelector(`.file-item[data-id="${id}"]`);
+                        if (fileItem) {
+                            fileItem.style.opacity = '0';
+                            fileItem.style.transform = 'translateY(-10px)';
+                            setTimeout(() => {
+                                fileItem.remove();
+                                updateEmptyState();
+                                updateStorageDisplay(); // 更新容量显示
+                            }, 300);
+                        }
+                    } else {
+                        alert('删除失败');
+                    }
+                } catch (error) {
+                    alert('网络错误，请稍后重试');
+                    console.error('删除错误:', error);
+                }
+            }
+        }
+
+        // 更新空文件状态
+        function updateEmptyState() {
+            emptyFiles.style.display = userFiles.length === 0 ? 'block' : 'none';
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            // 使用 UTC 方法避免本地时区转换
+            const year = date.getUTCFullYear();
+            const month = date.getUTCMonth() + 1; // 月份从 0 开始
+            const day = date.getUTCDate();
+            const hours = date.getUTCHours().toString().padStart(2, '0');
+            const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+            return `${year}年${month}月${day}日 ${hours}:${minutes}`;
+        }
+
+        // 获取文件图标
+        function getFileIcon(mimeType) {
+            if (mimeType.startsWith('image/')) return '🖼️';
+            if (mimeType.startsWith('video/')) return '🎬';
+            if (mimeType.startsWith('audio/')) return '🎵';
+            if (mimeType.includes('pdf')) return '📕';
+            if (mimeType.includes('word') || mimeType.includes('document')) return '📘';
+            if (mimeType.includes('excel') || mimeType.includes('sheet')) return '📗';
+            if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return '📙';
+            if (mimeType.includes('zip') || mimeType.includes('rar') || mimeType.includes('tar')) return '📦';
+            if (mimeType.includes('text')) return '📄';
+            return '📄';
+        }
+
+        // 获取文件类型
+        function getFileType(mimeType) {
+            if (mimeType.startsWith('image/')) return 'image';
+            if (mimeType.startsWith('video/')) return 'video';
+            if (mimeType.startsWith('audio/')) return 'audio';
+            if (mimeType.includes('pdf') || mimeType.includes('word') || mimeType.includes('document') ||
+                mimeType.includes('excel') || mimeType.includes('sheet') ||
+                mimeType.includes('powerpoint') || mimeType.includes('presentation') ||
+                mimeType.includes('text')) return 'document';
+            if (mimeType.includes('zip') || mimeType.includes('rar') || mimeType.includes('tar')) return 'archive';
+            return '';
+        }
+
+        // AI聊天相关功能
+        // 打开AI聊天模态框
+        openAiChat.addEventListener('click', () => {
+            aiChatModal.classList.add('visible');
+            // 如果没有欢迎消息，添加一个
+            if (aiChatMessages.children.length === 0) {
+                addBotMessage('您好！我是AI助手，有什么可以帮您解答的问题吗？', currentModel);
+            }
+            // 聚焦输入框
+            setTimeout(() => {
+                aiChatInput.focus();
+            }, 300);
+        });
+
+        // 关闭AI聊天模态框
+        closeAiChat.addEventListener('click', () => {
+            aiChatModal.classList.remove('visible');
+        });
+
+        // 点击模态框背景关闭
+        aiChatModal.addEventListener('click', (e) => {
+            if (e.target === aiChatModal) {
+                aiChatModal.classList.remove('visible');
+            }
+        });
+
+        // 选择AI模型
+        aiModelOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const model = option.dataset.model;
+                aiModelOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                currentModel = model;
+                currentModelName.textContent = option.querySelector('.ai-model-name').textContent;
+
+                // 更新发送按钮样式
+                aiChatSend.className = `ai-chat-send ${model}`;
+
+                // 添加模型切换提示
+                addBotMessage(`已切换到${option.querySelector('.ai-model-name').textContent}模型`, model);
+            });
+        });
+
+        // 发送消息
+        aiChatSend.addEventListener('click', sendMessage);
+
+        // 按Enter发送消息
+        aiChatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // 自动调整输入框高度
+        aiChatInput.addEventListener('input', () => {
+            aiChatInput.style.height = 'auto';
+            aiChatInput.style.height = (aiChatInput.scrollHeight > 150 ? 150 : aiChatInput.scrollHeight) + 'px';
+        });
+
+        // 发送消息函数
+        async function sendMessage() {
+            const message = aiChatInput.value.trim();
+            if (!message) return;
+
+            // 添加用户消息到聊天界面
+            addUserMessage(message);
+
+            // 清空输入框
+            aiChatInput.value = '';
+            aiChatInput.style.height = 'auto';
+
+            // 显示AI正在思考
+            const thinkingId = addThinkingMessage(currentModel);
+
+            // 禁用发送按钮
+            aiChatSend.classList.add('loading');
+            console.log('currentModel:', currentModel);
+            console.log('message:', message);
+
+            try {
+                // 调用后端API
+                const user = JSON.parse(localStorage.getItem('user')) || {};
+                const response = await fetch(`${API_BASE_URL}/files/ai?userIdn=${user.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        type: currentModel,
+                        content: message
+                    }),
+                    credentials: 'include'
+                });
+
+                // 移除思考消息
+                removeMessage(thinkingId);
+
+                if (response.ok) {
+                    const data = await response.text(); // 使用 text() 方法读取返回的 String 数据
+                    console.log('AI请求成功:', data);
+                    // 假设后端返回的字符串可以直接作为回复内容，或根据实际格式进行解析
+                    addBotMessage(data || '抱歉，我无法回答这个问题。', currentModel);
+                } else {
+                    // 处理错误
+                    addBotMessage('抱歉，服务出现了问题，请稍后再试。', currentModel);
+                }
+            } catch (error) {
+                console.error('AI请求错误:', error);
+                removeMessage(thinkingId);
+                addBotMessage('网络错误，请检查您的连接后重试。', currentModel);
+            } finally {
+                // 启用发送按钮
+                aiChatSend.classList.remove('loading');
+                // 滚动到底部
+                scrollToBottom();
+            }
+        }
+
+        // 添加用户消息
+        function addUserMessage(text) {
+            const messageId = 'msg-' + Date.now();
+            const messageEl = document.createElement('div');
+            messageEl.className = 'ai-message user';
+            messageEl.id = messageId;
+
+            const user = JSON.parse(localStorage.getItem('user')) || {};
+            const username = user.username || '用户';
+            const initial = username.charAt(0).toUpperCase();
+
+            messageEl.innerHTML = `
+                <div class="ai-message-avatar">${initial}</div>
+                <div class="ai-message-content">${escapeHtml(text)}</div>
+            `;
+
+            aiChatMessages.appendChild(messageEl);
+            scrollToBottom();
+            return messageId;
+        }
+
+        // 添加AI消息
+        function addBotMessage(text, model) {
+            const messageId = 'msg-' + Date.now();
+            const messageEl = document.createElement('div');
+            messageEl.className = `ai-message bot ${model}`;
+            messageEl.id = messageId;
+
+            let modelInitial = '文';
+            if (model === 'tongyi') modelInitial = '图';
+            if (model === 'deepseek') modelInitial = '答';
+
+            messageEl.innerHTML = `
+                <div class="ai-message-avatar">${modelInitial}</div>
+                <div class="ai-message-content">${formatBotMessage(text)}</div>
+            `;
+
+            aiChatMessages.appendChild(messageEl);
+            scrollToBottom();
+            return messageId;
+        }
+
+        // 添加AI思考中消息
+        function addThinkingMessage(model) {
+            const messageId = 'msg-' + Date.now();
+            const messageEl = document.createElement('div');
+            messageEl.className = `ai-message bot thinking ${model}`;
+            messageEl.id = messageId;
+
+            let modelInitial = '文';
+            if (model === 'tongyi') modelInitial = '图';
+            if (model === 'deepseek') modelInitial = '答';
+
+            messageEl.innerHTML = `
+                <div class="ai-message-avatar">${modelInitial}</div>
+                <div class="ai-message-content">
+                    <div class="ai-thinking-dot"></div>
+                    <div class="ai-thinking-dot"></div>
+                    <div class="ai-thinking-dot"></div>
+                </div>
+            `;
+
+            aiChatMessages.appendChild(messageEl);
+            scrollToBottom();
+            return messageId;
+        }
+
+        // 移除消息
+        function removeMessage(id) {
+            const messageEl = document.getElementById(id);
+            if (messageEl) {
+                messageEl.remove();
+            }
+        }
+
+        // 滚动到底部
+        function scrollToBottom() {
+            aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+        }
+
+        // 格式化AI消息（支持简单的Markdown格式）
+        function formatBotMessage(text) {
+            // 转义HTML
+            let formattedText = escapeHtml(text);
+
+            // 支持加粗
+            formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            // 支持斜体
+            formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+            // 支持换行
+            formattedText = formattedText.replace(/\n/g, '<br>');
+
+            return formattedText;
+        }
+
+        // 转义HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 初始化
+        checkLoginStatus();
+    </script>
+</body>
+
+</html>

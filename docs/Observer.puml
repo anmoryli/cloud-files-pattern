@@ -1,0 +1,32 @@
+@startuml
+abstract class Observer {
+    + void update(String message)
+}
+
+class UserSubscribed extends Observer {
+    - User user
+    - String observerStatus
+    + void update(String message)
+}
+
+abstract class Subject {
+    - List<Observer> observers;
+    + void attach(Observer observer)
+    + void detach(Observer observer)
+    + void notify()
+    + List<Observer> getObservers()
+}
+
+class UpdateVersion extends Subject {
+    - String subjectStatus
+    + void attach(Observer observer)
+    + void detach(Observer observer)
+    + void notify()
+    + List<Observer> getObservers()
+    + void setSubjectStatus(String subjectStatus)
+}
+
+UserSubscribed --> UpdateVersion
+Subject --> Observer
+
+@enduml

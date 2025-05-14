@@ -1,0 +1,40 @@
+@startuml
+abstract class AbstractAi {
+    + String getAiResult(String content);
+}
+
+class ImgAi extends AbstractAi {
+    + String getAiResult(String content)
+}
+
+class TextAi extends AbstractAi {
+    + String getAiResult(String content)
+}
+
+class DocAi extends AbstractAi {
+    + String getAiResult(String content)
+}
+
+abstract class AbstractAiFactory {
+    + AbstractAi getAi(String type);
+}
+
+class DocAiFactory extends AbstractAiFactory {
+    + AbstractAi getAi(String type)
+}
+
+class ImgAiFactory extends AbstractAiFactory {
+    + AbstractAi getAi(String type)
+}
+
+class TextAiFactory extends AbstractAiFactory {
+    + AbstractAi getAi(String type)
+}
+
+class Client {
+    + void main(String[] args)
+}
+
+Client  --> AbstractAiFactory
+Client --> AbstractAi
+@enduml

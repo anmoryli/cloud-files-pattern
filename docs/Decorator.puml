@@ -1,0 +1,27 @@
+@startuml
+abstract class Cipher {
+    +String encrypt(String plainText)
+}
+
+class SimpleCipher extends Cipher{
+    +String encrypt(String plainText)
+}
+
+class CipherDecorator {
+    -Cipher cipher
+    CipherDecorator(Cipher cipher)
+    +String encrypt(String plainText)
+}
+
+class AdvancedCipher extends CipherDecorator{
+    +String encrypt(String plainText)
+    +String mod(String cipherText)
+}
+
+class ComplexCipher extends CipherDecorator{
+    +String encrypt(String plainText)
+    +String reverse(String cipherText)
+}
+
+CipherDecorator o-- Cipher
+@enduml

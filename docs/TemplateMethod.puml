@@ -1,0 +1,43 @@
+@startuml
+
+abstract class TemplateMethod {
+    + abstract String primitiveOperation1();
+    + abstract String primitiveOperation2();
+    + abstract String primitiveOperation3();
+    + abstract String primitiveOperation4();
+
+    + void templateMethod()
+}
+
+class Upload extends TemplateMethod {
+    + String primitiveOperation1()
+    + String primitiveOperation2()
+    + String primitiveOperation3()
+    + String primitiveOperation4()
+}
+
+class Download extends TemplateMethod {
+    + String primitiveOperation1()
+    + String primitiveOperation2()
+    + String primitiveOperation3()
+    + String primitiveOperation4()
+}
+
+class AiRet extends TemplateMethod {
+    + String primitiveOperation1()
+    + String primitiveOperation2()
+    + String primitiveOperation3()
+    + String primitiveOperation4()
+}
+
+class TemplateMethod
+note right of TemplateMethod
+void templateMethod() {
+    primitiveOperation1();
+    primitiveOperation2();
+    primitiveOperation3();
+    primitiveOperation4();
+}
+endnote
+
+@enduml

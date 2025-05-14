@@ -1,0 +1,17 @@
+@startuml
+class FilesService {
+    + FilesService filesService
+    - FilesService()
+    + FilesService getInstance()
+}
+
+FilesService o-- FilesService
+
+class UsersService {
+    + UsersService usersService
+    - UsersService()
+    + UsersService getInstance()
+}
+
+UsersService o-- UsersService
+@enduml

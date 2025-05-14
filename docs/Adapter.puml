@@ -1,0 +1,31 @@
+@startuml
+interface WeChatPay{
+  + String weChatPay()
+}
+
+interface AliPay{
+  + String aliPay()
+}
+
+class ConcreteAliPay implements AliPay{
+    + String aliPay()
+}
+
+class ConcreteWeChatPay implements WeChatPay{
+    + String weChatPay()
+}
+
+class Adapter implements AliPay, WeChatPay{
+    - AliPay aliPay;
+    - WeChatPay weChatPay;
+
+    + void setAliPay(AliPay aliPay)
+
+    + void setWeChatPay(WeChatPay weChatPay)
+
+    + String aliPay()
+
+    + String weChatPay()
+}
+
+@enduml
