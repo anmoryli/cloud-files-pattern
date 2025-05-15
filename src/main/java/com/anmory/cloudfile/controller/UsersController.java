@@ -34,12 +34,14 @@ import java.util.UUID;
 @RequestMapping("/users")
 public class UsersController {
     private UsersService usersService;
-
+/////////////单例模式实例/////////////////////////////////
     @Autowired
     UsersController(UsersService usersService) {
         this.usersService = usersService;
         UsersService.getInstance();
     }
+/////////////单例模式实例/////////////////////////////////
+
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public Users login(@RequestParam String username,
                        @RequestParam String password,
@@ -77,7 +79,7 @@ public class UsersController {
         return null;
     }
 
-
+////////////////////观察者模式实例//////////////////////////////////////
     @RequestMapping("/update")
     public void update(String content) {
         System.out.println("update:"+content);
@@ -90,6 +92,7 @@ public class UsersController {
         versionUpdate.setSubjectState(content);
         versionUpdate.notifyObservers();
     }
+////////////////////观察者模式实例//////////////////////////////////////
 
     @RequestMapping("/register")
     public int register(String username, String password, String email, HttpSession session) {
@@ -129,6 +132,7 @@ public class UsersController {
         return ResponseEntity.ok().build();
     }
 
+/////////////////////装饰模式实例//////////////////////////////////////////
     public String getEncrypt(String password) {
         Cipher cipher = new SimpleCipher();
         Cipher complexCipher = new ComplexCipher(cipher);
@@ -136,6 +140,7 @@ public class UsersController {
 
         return advancedCipher.encrypt(password);
     }
+/////////////////////装饰模式实例//////////////////////////////////////////
 
     @RequestMapping("/getCurrentUser")
     public Users getCurrentUser(HttpSession session) {

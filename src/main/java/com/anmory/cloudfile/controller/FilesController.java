@@ -35,6 +35,8 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/files")
 public class FilesController {
+/////////////单例模式实例/////////////////////////////////
+
     private FilesService fileService;
     Upload upload = new Upload();
     Download download = new Download();
@@ -48,6 +50,9 @@ public class FilesController {
         this.fileService = fileService;
         FilesService.getInstance();
     }
+/////////////单例模式实例/////////////////////////////////
+
+////////////模板方法模式实例///////////////////////////////
     @RequestMapping("/upload")
     public boolean upload(@RequestParam("file") MultipartFile file,
                           HttpServletRequest request, int userIdn) throws IOException {
@@ -75,6 +80,7 @@ public class FilesController {
         System.out.println(upload.primitiveOperation4());
         return false;
     }
+////////////模板方法模式实例///////////////////////////////
 
     @RequestMapping("/getFilesList")
     public List<Files> getFilesList(HttpServletRequest request,int userIdn) {
@@ -135,6 +141,7 @@ public class FilesController {
     @Autowired
     TextAi textAi;
 
+////////////////////////////工厂方法模式实例/////////////////////////////////////////////////////
     @RequestMapping("/ai")
     public String ai(@RequestBody Map<String, String> requestBody,
                      HttpServletRequest request, int userIdn) {
@@ -206,4 +213,5 @@ public class FilesController {
         System.out.println(aiRet.primitiveOperation4());
         return null;
     }
+////////////////////////////工厂方法模式实例/////////////////////////////////////////////////////
 }

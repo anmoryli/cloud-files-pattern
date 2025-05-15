@@ -6,7 +6,7 @@ CREATE TABLE users (
                        username VARCHAR(50) NOT NULL UNIQUE,
                        password VARCHAR(255) NOT NULL,
                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                       email VARCHAR(100) NOT NULL UNIQUE DEFAULT 'default@email.com',
+                       email VARCHAR(100) NOT NULL UNIQUE DEFAULT 'default@email.com'
 );
 
 -- 文件表
